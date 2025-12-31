@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy New Year 2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Great+Vibes&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:#000;
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+}
+
+/* Hanging Stars */
+.hanging{
+    position:absolute;
+    top:0;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:70px;
+    z-index:2;
+}
+.star{
+    width:20px;height:20px;
+    background:gold;
+    clip-path: polygon(
+      50% 0%, 61% 35%, 98% 35%, 
+      68% 57%, 79% 91%, 
+      50% 70%, 21% 91%, 
+      32% 57%, 2% 35%, 
+      39% 35%
+    );
+    position:relative;
+    animation:swing 3s ease-in-out infinite;
+}
+.star::before{
+    content:"";
+    position:absolute;
+    top:-90px;left:50%;
+    transform:translateX(-50%);
+    width:2px;height:90px;
+    background:gold;
+}
+@keyframes swing{
+    0%,100%{transform:rotate(-6deg);}
+    50%{transform:rotate(6deg);}
+}
+
+/* Center Text */
+.center{
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    z-index:2;
+}
+.happy{
+    font-family:'Montserrat',sans-serif;
+    font-size:85px;
+    font-weight:800;
+    letter-spacing:6px;
+    color:gold;
+    text-shadow:0 0 30px gold;
+    animation:glow 2s infinite alternate;
+}
+.year{
+    font-family:'Great Vibes',cursive;
+    font-size:120px;
+    color:gold;
+    letter-spacing:8px;
+    text-shadow:0 0 35px gold;
+    animation:float 3s ease-in-out infinite;
+}
+@keyframes glow{from{opacity:.6}to{opacity:1}}
+@keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-20px)}
+}
+
+/* Footer */
+.footer{
+    position:absolute;
+    bottom:15px;
+    width:100%;
+    text-align:center;
+    color:gold;
+    letter-spacing:2px;
+    opacity:.8;
+    z-index:2;
+}
+
+canvas{position:absolute;top:0;left:0;z-index:1;}
+</style>
+</head>
+<body>
+
+<div class="hanging">
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+</div>
+
+<div class="center">
+    <div class="happy">HAPPY NEW YEAR</div>
+    <div class="year">2026</div>
+</div>
+
+<div class="footer">create by coding117</div>
+
+<canvas id="fireworks"></canvas>
+
+<script>
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+class Firework{
+    constructor(x=null){
+        this.x = x !== null ? x : Math.random()*canvas.width;
+        this.y = canvas.height;
+        this.targetY = Math.random()*canvas.height/2;
+
+        /* 🔥 NORMAL SPEED (SLOW) */
+        this.speed = Math.random()*1.5 + 2;
+
+        this.exploded=false;
+        this.color=`hsl(${Math.random()*360},100%,60%)`;
+        this.particles=[];
+    }
+    update(){
+        if(!this.exploded){
+            this.y-=this.speed;
+            if(this.y<=this.targetY){
+                this.exploded=true;
+                for(let i=0;i<120;i++){
+                    this.particles.push(new Particle(this.x,this.y,this.color));
+                }
+            }
+        }else{
+            this.particles.forEach(p=>p.update());
+        }
+    }
+    draw(){
+        if(!this.exploded){
+            ctx.fillStyle=this.color;
+            ctx.beginPath();
+            ctx.arc(this.x,this.y,3.5,0,Math.PI*2);
+            ctx.fill();
+        }else{
+            this.particles.forEach(p=>p.draw());
+        }
+    }
+}
+
+class Particle{
+    constructor(x,y,color){
+        this.x=x;this.y=y;
+        this.color=color;
+
+        /* 🔥 NORMAL PARTICLE SPEED (SLOW) */
+        this.vx=(Math.random()-.5)*7;
+        this.vy=(Math.random()-.5)*7;
+
+        this.life=100;
+    }
+    update(){
+        this.x+=this.vx;
+        this.y+=this.vy;
+        this.life--;
+    }
+    draw(){
+        ctx.fillStyle=this.color;
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,2.5,0,Math.PI*2);
+        ctx.fill();
+    }
+}
+
+let fireworks=[];
+let firstBlastDone=false;
+
+/* 🔥 START ME EK BAAR HEAVY BLAST (RIGHT SIDE) */
+function startBlast(){
+    for(let i=0;i<14;i++){
+        fireworks.push(
+            new Firework(canvas.width*0.75 + Math.random()*canvas.width*0.2)
+        );
+    }
+    firstBlastDone=true;
+}
+
+function animate(){
+    ctx.fillStyle="rgba(0,0,0,0.25)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    /* Start blast only once */
+    if(!firstBlastDone){
+        startBlast();
+    }
+
+    /* Normal fireworks (slow & smooth) */
+    if(Math.random()<0.05){
+        fireworks.push(new Firework());
+    }
+
+    fireworks.forEach((fw,i)=>{
+        fw.update();
+        fw.draw();
+        if(fw.exploded && fw.particles.every(p=>p.life<=0)){
+            fireworks.splice(i,1);
+        }
+    });
+
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>
